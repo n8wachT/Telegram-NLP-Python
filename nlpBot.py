@@ -6,7 +6,7 @@ import sqlite3
 import itertools
 
 #Initialize db
-conn = sqlite3.connect('sendenceDatabase.db')
+conn = sqlite3.connect('sentenceDatabase.db')
 c = conn.cursor()
 def createTable():
     c.execute('''CREATE TABLE IF NOT EXISTS sentences(username TEXT, sentence TEXT)''')
@@ -28,7 +28,7 @@ def start(bot, update):
 def error(bot, update, error):
     logger.warn('Update "%s" caused error "%s"' % (update, error))
 
-def showID(but, update):
+def showID(bot, update):
     bot.sendMessage(update.message.chat_id, text=str(update.message.from_user.id))
 
 def showStopWords(bot, update):
@@ -59,15 +59,15 @@ def main():
     updater = Updater(key)
 
     dp = updater.dispatcher
-    dp.add_handler(CommandHandler("start","start"))
-    dp.add_handler(CommandHandler("showID","showID"))
-    dp.add_handler(CommandHandler("showStopWords","showStopWords"))
-    dp.add_handler(CommandHandler("returnDataEntry","returnDataEntry"))
-    dp.add_handler(MessageHandler("[Filters.text]","saveDataEntry"))
+    dp.add_handler(CommandHandler("start",start))
+    dp.add_handler(CommandHandler("showID",showID))
+    dp.add_handler(CommandHandler("showStopWords",showStopWords))
+    dp.add_handler(CommandHandler("returnDataEntry",returnDataEntry))
+    dp.add_handler(MessageHandler([Filters.text],saveDataEntry))
     dp.add_error_handler(error)
 
     updater.start_polling()
-    update.idle()
+    updater.idle()
 
 if __name__ == '__main__':
     main()
