@@ -49,6 +49,7 @@ def returnDataEntry(bot, update):
     c = conn.cursor()
     c.execute('SELECT * FROM sentences')
     data = c.fetchall()
+    bot.sendMessage(update.message.chat_id, text=str(data))
     c.close()
     conn.close()
 
@@ -82,6 +83,7 @@ def main():
     dp.add_handler(CommandHandler("start",start))
     dp.add_handler(CommandHandler("showID",showID))
     dp.add_handler(CommandHandler("showStopWords",showStopWords))
+    dp.add_handler(CommandHandler("returnDataEntry", returnDataEntry))
     dp.add_handler(CommandHandler("showFreq",showFreq))
     dp.add_handler(MessageHandler([Filters.text],saveDataEntry))
     dp.add_error_handler(error)
