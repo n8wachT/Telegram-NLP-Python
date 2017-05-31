@@ -11,10 +11,10 @@ Dependencies
 -------------
 > - <a href="http://www.nltk.org/">Natural Language Toolkit</a>
 > - <a href="https://python-telegram-bot.org/">Python-Telegram-Bot</a>
-> - Sqlite3
+> - <a href="github.com/jsvine/markovify">Markovify</a>
 #### To-Do:
 
-> - Implement Markov Chains for each individual user
+> - Implement Markov Chains for each individual user --DONE
 > - Offer more data-visualization
 > - Implement Deep Learning/ANN
 
