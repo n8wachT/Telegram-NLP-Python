@@ -1,16 +1,17 @@
 from nltk.corpus import stopwords, PlaintextCorpusReader
 from nltk.tokenize import word_tokenize
+from nltk.probability import FreqDist
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import logging
 import sqlite3
 import itertools
+import markovify
 
 #Initialize db
-conn = sqlite3.connect('sentenceDatabase.db')
-c = conn.cursor()
-def createTable():
-    c.execute('''CREATE TABLE IF NOT EXISTS sentences(username TEXT, sentence TEXT)''')
-createTable()
+def createDB(name):
+	conn = sqlite3.connect(name)
+	c = conn.cursor()
+	c.execute('''CREATE TABLE IF NOT EXISTS sentences(username TEXT, sentence TEXT)''')
 
 #logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 #global vars
 stop_words = set(stopwords.words("english"))
-stop_words.update('[',']',',','"',"'",'(',')', ".")
+stop_words.update('[',']',',','"',"'",'(',')', ".", "-", ":", "''")
 
 #Bot Commands
 def start(bot, update):
@@ -47,9 +48,28 @@ def saveDataEntry(bot, update):
 def returnDataEntry(bot, update):
     conn = sqlite3.connect('sentenceDatabase.db')
     c = conn.cursor()
-    c.execute('SELECT * FROM sentences')
+    user = update.message.from_user.username
+    c.execute('SELECT * FROM sentences WHERE username=?', (user,))
     data = c.fetchall()
-    bot.sendMessage(update.message.chat_id, text=str(data))
+    sentenceList = user + ":\n"
+    for i in data:
+    	sentenceList += str(i[1]) + "\n"
+    bot.sendMessage(update.message.chat_id, text=sentenceList)
+    c.close()
+    conn.close()
+
+def markovChain(bot,update):
+    conn = sqlite3.connect('sentenceDatabase.db')
+    c = conn.cursor()
+    sentenceLists=[]
+    user = update.message.from_user.username
+    c.execute('SELECT sentence FROM sentences WHERE username=?', (user,))
+    data = c.fetchall()
+    sentenceList = ""
+    for i in data:
+    	sentenceList += str(i[0]) + "\n"
+    text_model = markovify.NewlineText(sentenceList)
+    bot.sendMessage(update.message.chat_id, text=str(text_model.make_short_sentence(140)))
     c.close()
     conn.close()
 
@@ -75,9 +95,12 @@ def showFreq(bot,update):
     conn.close()
 
 def main():
+    
+    #Create DB
+    createDB('sentenceDatabase.db')
 
     #insert your api key here
-    updater = Updater(key)
+    updater = Updater('key')
 
     dp = updater.dispatcher
     dp.add_handler(CommandHandler("start",start))
@@ -85,7 +108,8 @@ def main():
     dp.add_handler(CommandHandler("showStopWords",showStopWords))
     dp.add_handler(CommandHandler("returnDataEntry", returnDataEntry))
     dp.add_handler(CommandHandler("showFreq",showFreq))
-    dp.add_handler(MessageHandler([Filters.text],saveDataEntry))
+    dp.add_handler(CommandHandler("markovChain", markovChain))
+    dp.add_handler(MessageHandler(Filters.text,saveDataEntry))
     dp.add_error_handler(error)
 
     updater.start_polling()
